@@ -13,6 +13,7 @@ enum METHOD {
 };
 
 
+
 typedef struct Header {
     char* header;
     char* value;
@@ -22,9 +23,15 @@ typedef struct Request {
 
     enum METHOD method;
     Header* headers;
+    int nbHeaders;
     char* route;
 
 }Request;
+
+typedef struct Route {
+    char* stringRoute;
+    char* (*method)(char*);
+}Route;
 
 typedef struct Server {
     int port;
@@ -34,7 +41,127 @@ typedef struct Server {
 
     int server_fd;
 
+    Route* routes;
+    int nbRoutes;
+
 }Server;
+
+
+void freeReq(Request* req){
+    for(int i =0; i < req->nbHeaders; i+=1){
+        free(req->headers[i].header);
+        free(req->headers[i].value);
+    }
+    free(req->headers);
+    free(req->route);
+    free(req);
+}
+
+void freeServer(Server* serv){
+
+    for(int i =0; i < serv->nbHeaders; i+=1){
+        free(serv->headers[i].header);
+        free(serv->headers[i].value);
+    }
+
+}
+
+Request* parseRequest(char* buffer) {
+
+    Request* request = malloc(sizeof(Request));
+
+    char* finMethod = strchr(buffer, ' ');
+    char* stringMethod = malloc( finMethod-buffer+1 );
+    strlcpy(stringMethod, buffer, finMethod-buffer+1);
+    stringMethod[finMethod-buffer] = '\0';
+
+    printf("[DEBUG] stringMethod: %s\n", stringMethod);
+
+    if(strcmp(stringMethod, "GET") == 0) request->method = GET;
+    if(strcmp(stringMethod, "POST") == 0) request->method = POST;
+
+    free(stringMethod);
+
+    char* endRoute = strstr(finMethod, "HTTP");
+
+    printf("[DEBUG] endROute: %s\n", endRoute);
+
+    char* stringRoute = malloc(endRoute - 1 - finMethod - 1 + 1 );
+    strlcpy(stringRoute, finMethod+1, endRoute - finMethod-1);
+    stringRoute[ endRoute - finMethod-2] = '\0';
+
+    request->route = stringRoute;
+    printf("[DEBUG] stringRoute: %s\n", stringRoute);
+
+    int nbHeaders = 0;
+    Header* headers = NULL;
+
+    char* headerStart = strstr(buffer, "\r\n");
+    while( headerStart != NULL && *(headerStart+2) != '\r') {
+        printf("[DEBUG] heaedersStart: %s\n", headerStart);
+        nbHeaders+=1;
+        if(nbHeaders == 0) headers = malloc(sizeof(Header));
+        else headers = realloc(headers, nbHeaders*sizeof(Header));
+
+
+        char* nextHeader = strstr(headerStart+2, "\r\n");
+        char* actualHeader = malloc(nextHeader-headerStart+1);
+        strlcpy(actualHeader, headerStart, nextHeader-headerStart+1);
+        actualHeader[nextHeader-headerStart] = '\0';
+
+        printf("[DEBUG] actualHeader: %s\n", actualHeader);
+
+        char* delim = strchr(actualHeader, ':');
+        char* headerDesc = malloc(delim-actualHeader+1);
+        strlcpy(headerDesc, actualHeader, delim-actualHeader+1);
+        headerDesc[delim-actualHeader] = '\0';
+
+        printf("[DEBUG] headerDesc: %s\n", headerDesc);
+
+        char* headerValue = malloc(strlen(delim)-1);
+        strlcpy(headerValue, delim+2, strlen(delim)-2);
+        headerValue[strlen(delim)-2] = '\0';
+        printf("[DEBUG] headerValue: %s\n", headerValue);
+
+
+        headers[nbHeaders-1].header = headerDesc;
+        headers[nbHeaders-1].value = headerValue;
+
+        free(actualHeader);
+
+
+
+
+        headerStart = nextHeader;
+    }
+
+
+    request->headers = headers;
+    request->nbHeaders = nbHeaders;
+
+
+    return request;
+
+
+}
+
+
+void addRoute(Server* server, const char* route, char* (*method)(char*)){
+    if(server->nbRoutes == 0) {
+        server->routes = malloc(sizeof(Route));
+    }
+    else {
+        server->routes = realloc(server->routes, (server->nbRoutes+1)*sizeof(Route));
+    }
+
+    server->routes[server->nbRoutes].stringRoute = malloc((strlen(route)+1));
+    server->routes[server->nbRoutes].method  = method;
+
+    strcpy(server->routes[server->nbRoutes].stringRoute, route);
+
+    server->nbRoutes+=1;
+
+}
 
 void addHeader(Server* server, const char* header, const char* value){
     if(server->nbHeaders == 0) {
@@ -79,13 +206,13 @@ char* addContentToResponse(const char* filename, char* response) {
     fptr = fopen(filename, "r");
 
     fseek(fptr, 0L, SEEK_END);
-    int sz = ftell(fptr)-1;
+    int sz = ftell(fptr);
     rewind(fptr);
 
 
-    char myString[sz];
+    char myString[sz+1];
     fread(myString, sz, 1, fptr);
-
+    myString[sz] = '\0';
     printf("string  : %s : %d\n", myString, sz);
 
     response = realloc(response, ( strlen(response)+sz+2));
@@ -128,6 +255,28 @@ void startServer(Server* server) {
 
 }
 
+void sendResponse(int new_socket, char* reponse) {
+
+    send(new_socket, reponse, strlen(reponse), 0);
+    printf("Réponse envoyée au client.\n");
+    free(reponse);
+
+    close(new_socket); // Ferme la connexion avec le client actuel
+}
+
+char* connard(char* reponse){
+
+    return( addContentToResponse("static/accueil.html", reponse) );
+
+
+}
+
+char* defaut(char* reponse) {
+
+    return( addContentToResponse("static/index.html", reponse) );
+
+}
+
 
 void handleConnection(Server* server){
     if (listen(server->server_fd, 3) < 0) {
@@ -149,22 +298,41 @@ void handleConnection(Server* server){
 
     char buffer[BUFFER_SIZE] = {0};
 
-    char *reponse = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
-    reponse = addHeaderToResponse(server, reponse);
-    reponse = addContentToResponse("static/index.html", reponse);
-
 
     int valread = read(new_socket, buffer, BUFFER_SIZE - 1); // -1 pour garder de la place pour le '\0' terminal
     if (valread > 0) {
         printf("Message reçu du client : %s\n", buffer);
+        Request* request = parseRequest(buffer);
+        char *reponse = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
+        reponse = addHeaderToResponse(server, reponse);
+
+        char* (*method)(char*) = defaut;
+
+        for(int i = 0; i < server->nbRoutes; i+=1) {
+            printf("[DEBUG] i : %d ; %s\n", i,server->routes[i].stringRoute);
+            if(strcmp(server->routes[i].stringRoute, request->route)==0) {
+                method = server->routes[i].method;
+                break;
+            }
+        }
+
+        reponse = method(reponse);
+
+        sendResponse(new_socket, reponse);
+        freeReq(request);
+
     }
 
+    char *reponse = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
+    reponse = addHeaderToResponse(server, reponse);
+    reponse = addContentToResponse("static/accueil.html", reponse);
     // Envoi d'une réponse au client
     send(new_socket, reponse, strlen(reponse), 0);
     printf("Réponse envoyée au client.\n");
     free(reponse);
 
     close(new_socket); // Ferme la connexion avec le client actuel
+
 
 }
 
@@ -175,11 +343,13 @@ int main() {
 
     startServer(&server);
     addHeader(&server, "Server" , "WebC");
+    addRoute(&server, "/test", connard);
 
     while(1) {
         handleConnection(&server);
     }
 
+    freeServer(&server);
     close(server.server_fd);
     return 0;
 }
