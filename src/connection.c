@@ -1,22 +1,25 @@
 #include "../include/connection.h"
 #include <stdio.h>
 
-void sendResponse(int new_socket, char* reponse) {
+void sendResponse(int new_socket, Response* reponse) {
 
-    send(new_socket, reponse, strlen(reponse), 0);
+    char* stringResponse = stringifyResponse(reponse);
+
+    send(new_socket, stringResponse, strlen(stringResponse), 0);
     printf("Réponse envoyée au client.\n");
-    free(reponse);
+    freeResponse(reponse);
+    free(stringResponse);
 
     close(new_socket); // Ferme la connexion avec le client actuel
 }
 
-char* defaut(char* reponse) {
+Response* defaut(Response* reponse) {
 
     return( addContentToResponse("static/index.html", reponse) );
 
 }
 
-char* staticRoute(char* route, Server* server, char* reponse) {
+Response* staticRoute(char* route, Server* server, Response* reponse) {
     char* filepath = malloc(strlen(route)-strlen(server->staticRoute)+1);
     strlcpy(filepath, route+strlen(server->staticRoute) , strlen(route) - strlen(server->staticRoute)+1);
     filepath[ strlen(route) - strlen(server->staticRoute)] = '\0';
@@ -28,6 +31,9 @@ char* staticRoute(char* route, Server* server, char* reponse) {
 
 
     reponse = addContentToResponse(filename, reponse);
+
+    free(filepath);
+    free(filename);
 
     return reponse;
 
@@ -58,10 +64,17 @@ void handleConnection(Server* server){
     if (valread > 0) {
         // printf("Message reçu du client : %s\n", buffer);
         Request* request = parseRequest(buffer);
-        char *reponse = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
-        reponse = addHeaderToResponse(server, reponse);
 
-        char* (*method)(char*) = defaut;
+        Response* response = malloc(sizeof(Response));
+
+        // char *body = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
+        char *body = strdup("");
+        response->nbHeaders = 0;
+        response->body = body;
+        response->status = 200;
+        response = addServerHeaderToResponse(server, response);
+
+        Response* (*method)(Response*) = server->defautlMethod == NULL ? defaut : server->defautlMethod ;
         char customRoute = 0;
 
         if(server->staticRoute != NULL){
@@ -71,8 +84,8 @@ void handleConnection(Server* server){
             strlcpy(verifStaticRoute, request->route, strlen(server->staticRoute)+1);
             verifStaticRoute[strlen(server->staticRoute)] = '\0';
             if(strcmp(verifStaticRoute, server->staticRoute)==0) {
-                reponse = staticRoute(request->route, server, reponse);
-                printf("[DEBUG] %s\n", reponse);
+                response = staticRoute(request->route, server, response);
+                printf("[DEBUG] %s\n", response->body);
             }
             else customRoute = 1;
             free(verifStaticRoute);
@@ -89,11 +102,11 @@ void handleConnection(Server* server){
                 }
             }
 
-            reponse = method(reponse);
+            response = method(response);
         }
 
 
-        sendResponse(new_socket, reponse);
+        sendResponse(new_socket, response);
         freeReq(request);
 
     }

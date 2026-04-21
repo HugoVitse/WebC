@@ -1,14 +1,12 @@
 #include "../include/utils.h"
 
 
-char* addContentToResponse(const char* filename, char* response) {
+Response* addContentToResponse(const char* filename, Response* response) {
     FILE *fptr;
     fptr = fopen(filename, "r");
 
     if (fptr == NULL) {
-        response = realloc(response, strlen(response)+strlen("NOT FOUND")+1);
-        strcat(response, "NOT FOUND");
-        return response;
+        fptr = fopen("static/notfound.html", "r");
     }
 
     fseek(fptr, 0L, SEEK_END);
@@ -20,9 +18,9 @@ char* addContentToResponse(const char* filename, char* response) {
     fread(myString, sz, 1, fptr);
     myString[sz] = '\0';
 
-    response = realloc(response, ( strlen(response)+sz+2));
-    strcat(response, "\n");
-    strcat(response, myString);
+    response->body = realloc(response->body, ( strlen(response->body)+sz+2));
+    strcat(response->body, "\n");
+    strcat(response->body, myString);
 
 
     fclose(fptr);

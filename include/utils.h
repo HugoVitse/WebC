@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include "server.h"
 
-char* addContentToResponse(const char* filename, char* response);
-void sendResponse(int new_socket, char* reponse);
+Response* addContentToResponse(const char* filename, Response* response);
+void sendResponse(int new_socket, Response* reponse);

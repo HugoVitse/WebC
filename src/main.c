@@ -1,10 +1,9 @@
 #include "../include/webc.h"
 
-char* connard(char* reponse){
-
+Response* connard(Response* reponse){
+    reponse->status = 404;
+    addHeaderToResponse( (Header){"Content-Type", "text/html"} , reponse);
     return( addContentToResponse("static/accueil.html", reponse) );
-
-
 }
 
 int main() {
@@ -13,21 +12,21 @@ int main() {
     server.port = 8080;
 
     startServer(&server);
-    addHeader(&server, "Server" , "WebC");
-    addHeader(&server, "Cache-Control" , "no-store, no-cache, must-revalidate, max-age=0");
-    addHeader(&server, "Pragma" , "no-cache");
-    addHeader(&server, "Expires" , "0");
-
+    addGlobalHeader(&server, "Server" , "WebC");
+    addGlobalHeader(&server, "Cache-Control" , "no-store, no-cache, must-revalidate, max-age=0");
+    addGlobalHeader(&server, "Pragma" , "no-cache");
+    addGlobalHeader(&server, "Expires" , "0");
 
     addRoute(&server, "/test", connard);
+
     server.staticRoute = "/static/";
     server.staticPath = "static";
 
-    while(1) {
-        handleConnection(&server);
-    }
+    server.defautlMethod = connard;
 
-    freeServer(&server);
-    close(server.server_fd);
+    run(&server);
+
+    stop(&server);
+
     return 0;
 }

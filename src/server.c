@@ -1,4 +1,5 @@
 #include "../include/server.h"
+#include <string.h>
 
 void freeServer(Server* serv){
 
@@ -10,7 +11,7 @@ void freeServer(Server* serv){
 }
 
 
-void addRoute(Server* server, const char* route, char* (*method)(char*)){
+void addRoute(Server* server, const char* route, Response* (*method)(Response*)){
     if(server->nbRoutes == 0) {
         server->routes = malloc(sizeof(Route));
     }
@@ -28,7 +29,7 @@ void addRoute(Server* server, const char* route, char* (*method)(char*)){
 }
 
 
-void addHeader(Server* server, const char* header, const char* value){
+void addGlobalHeader(Server* server, const char* header, const char* value){
     if(server->nbHeaders == 0) {
         server->headers = malloc(sizeof(Header));
     }
@@ -46,32 +47,37 @@ void addHeader(Server* server, const char* header, const char* value){
 
 }
 
-
-char* addHeaderToResponse(Server* server, char* response){
-    for(int i =0; i < server->nbHeaders;i+=1){
-
-        size_t header_len = strlen(server->headers[i].header);
-        size_t value_len = strlen(server->headers[i].value);
-
-        size_t line_size = header_len + value_len + 5;
-
-        char* headerString = malloc(line_size);
-        sprintf(headerString, "%s: %s\r\n", server->headers[i].header, server->headers[i].value);
-
-
-        response = realloc(response, ( strlen(response)+line_size));
-        strcat(response, headerString);
-
-        free(headerString);
+Response* addServerHeaderToResponse(Server* server, Response* response) {
+    for(int i=0; i< server->nbHeaders; i+=1) {
+        response = addHeaderToResponse(server->headers[i], response);
     }
     return response;
 }
 
+Response* addHeaderToResponse(Header header, Response* response){
+    response->nbHeaders+=1;
+    if(response->nbHeaders == 1) response->headers = malloc(sizeof(Header));
+    else response->headers = realloc(response->headers, response->nbHeaders*sizeof(Header));
+
+    response->headers[response->nbHeaders-1] = header;
+    return response;
+}
+
+void freeResponse(Response* response) {
+
+    free(response->body);
+    free(response->headers);
+    free(response);
+
+}
 
 void startServer(Server* server) {
     int opt = 1;
     server->nbHeaders = 0;
     server->staticRoute = NULL;
+    server->defautlMethod = NULL;
+    server->nbRoutes = 0;
+    server->routes = NULL;
 
     if ((server->server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("Échec de la création du socket");
@@ -91,5 +97,60 @@ void startServer(Server* server) {
         perror("Échec du bind");
         exit(EXIT_FAILURE);
     }
+
+}
+
+void handleConnection(Server *server);
+
+void run(Server* serv) {
+    while(1) {
+        handleConnection(serv);
+    }
+}
+
+void stop(Server* serv){
+
+    freeServer(serv);
+    close(serv->server_fd);
+}
+
+
+char* stringifyResponse(Response* response) {
+
+    char* stringified = malloc(18);
+    sprintf(stringified, "HTTP/1.1 %d OK\r\n", response->status);
+
+    printf("[DEBUG] body : %s\n",response->body);
+    printf("[DEBUG] stringified : %s\n",stringified);
+
+
+    for(int i =0; i < response->nbHeaders;i+=1){
+
+        size_t header_len = strlen(response->headers[i].header);
+        size_t value_len = strlen(response->headers[i].value);
+
+        size_t line_size = header_len + value_len + 5;
+
+        char* headerString = malloc(line_size);
+        sprintf(headerString, "%s: %s\r\n", response->headers[i].header, response->headers[i].value);
+
+
+        stringified = realloc(stringified, ( strlen(stringified)+line_size));
+        strcat(stringified, headerString);
+
+        free(headerString);
+        printf("[DEBUG] stringified : %s\n",stringified);
+
+    }
+
+    stringified = realloc(stringified, ( strlen(stringified)+strlen(response->body)+3));
+    strcat(stringified, "\r\n");
+
+    strcat(stringified, response->body);
+    printf("[DEBUG] stringified : %s\n",stringified);
+
+    return stringified;
+
+
 
 }
