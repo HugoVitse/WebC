@@ -1,4 +1,5 @@
 #pragma once
+#include "method.h"
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdlib.h>
@@ -25,6 +26,7 @@ typedef struct Response{
 
 typedef struct Route {
     char* stringRoute;
+    enum METHOD verb;
     Response* (*method)(Response*);
 }Route;
 
@@ -55,7 +57,7 @@ typedef struct Server {
 
 
 void addGlobalHeader(Server* server, const char* header, const char* value);
-void addRoute(Server* server, const char* route, Response* (*method)(Response*));
+void addRoute(Server* server, const char* route, Response* (*method)(Response*), enum METHOD verb);
 Response* addServerHeaderToResponse(Server* server, Response* response);
 Response* addHeaderToResponse(Header header, Response* response);
 char* stringifyResponse(Response* response);

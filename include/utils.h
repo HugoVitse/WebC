@@ -7,5 +7,7 @@
 #include <unistd.h>
 #include "server.h"
 
-Response* addContentToResponse(const char* filename, Response* response);
+Response* addFileContentToResponseBody(const char* filename, Response* response);
+Response* addContentToResponseBody(const char *content, Response *response);
+
 void sendResponse(int new_socket, Response* reponse);

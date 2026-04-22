@@ -1,7 +1,8 @@
 #include "../include/utils.h"
+#include <stdlib.h>
 
 
-Response* addContentToResponse(const char* filename, Response* response) {
+Response* addFileContentToResponseBody(const char* filename, Response* response) {
     FILE *fptr;
     fptr = fopen(filename, "r");
 
@@ -27,4 +28,14 @@ Response* addContentToResponse(const char* filename, Response* response) {
 
 
     return response;
+}
+
+
+Response* addContentToResponseBody(const char* content, Response *response){
+
+    response->body = realloc(response->body, strlen(response->body)+strlen(content)+1);
+    strcat(response->body,content);
+
+    return response;
+
 }

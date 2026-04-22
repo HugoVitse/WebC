@@ -15,7 +15,7 @@ void sendResponse(int new_socket, Response* reponse) {
 
 Response* defaut(Response* reponse) {
 
-    return( addContentToResponse("static/index.html", reponse) );
+    return( addFileContentToResponseBody("static/index.html", reponse) );
 
 }
 
@@ -30,7 +30,7 @@ Response* staticRoute(char* route, Server* server, Response* reponse) {
     sprintf(filename, "%s/%s", server->staticPath,filepath);
 
 
-    reponse = addContentToResponse(filename, reponse);
+    reponse = addFileContentToResponseBody(filename, reponse);
 
     free(filepath);
     free(filename);
@@ -85,7 +85,7 @@ void handleConnection(Server* server){
             verifStaticRoute[strlen(server->staticRoute)] = '\0';
             if(strcmp(verifStaticRoute, server->staticRoute)==0) {
                 response = staticRoute(request->route, server, response);
-                printf("[DEBUG] %s\n", response->body);
+                // printf("[DEBUG] %s\n", response->body);
             }
             else customRoute = 1;
             free(verifStaticRoute);
@@ -96,7 +96,8 @@ void handleConnection(Server* server){
         if(customRoute == 1){
 
             for(int i = 0; i < server->nbRoutes; i+=1) {
-                if(strcmp(server->routes[i].stringRoute, request->route)==0) {
+                if(strcmp(server->routes[i].stringRoute, request->route)==0 && request->method == server->routes[i].verb) {
+
                     method = server->routes[i].method;
                     break;
                 }

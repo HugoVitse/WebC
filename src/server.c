@@ -11,7 +11,7 @@ void freeServer(Server* serv){
 }
 
 
-void addRoute(Server* server, const char* route, Response* (*method)(Response*)){
+void addRoute(Server* server, const char* route, Response* (*method)(Response*), enum METHOD verb){
     if(server->nbRoutes == 0) {
         server->routes = malloc(sizeof(Route));
     }
@@ -21,6 +21,7 @@ void addRoute(Server* server, const char* route, Response* (*method)(Response*))
 
     server->routes[server->nbRoutes].stringRoute = malloc((strlen(route)+1));
     server->routes[server->nbRoutes].method  = method;
+    server->routes[server->nbRoutes].verb = verb;
 
     strcpy(server->routes[server->nbRoutes].stringRoute, route);
 
@@ -120,8 +121,8 @@ char* stringifyResponse(Response* response) {
     char* stringified = malloc(18);
     sprintf(stringified, "HTTP/1.1 %d OK\r\n", response->status);
 
-    printf("[DEBUG] body : %s\n",response->body);
-    printf("[DEBUG] stringified : %s\n",stringified);
+    // printf("[DEBUG] body : %s\n",response->body);
+    // printf("[DEBUG] stringified : %s\n",stringified);
 
 
     for(int i =0; i < response->nbHeaders;i+=1){
@@ -139,7 +140,7 @@ char* stringifyResponse(Response* response) {
         strcat(stringified, headerString);
 
         free(headerString);
-        printf("[DEBUG] stringified : %s\n",stringified);
+        // printf("[DEBUG] stringified : %s\n",stringified);
 
     }
 
@@ -147,7 +148,7 @@ char* stringifyResponse(Response* response) {
     strcat(stringified, "\r\n");
 
     strcat(stringified, response->body);
-    printf("[DEBUG] stringified : %s\n",stringified);
+    // printf("[DEBUG] stringified : %s\n",stringified);
 
     return stringified;
 

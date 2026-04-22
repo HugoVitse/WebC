@@ -2,5 +2,9 @@
 
 enum METHOD {
     GET,
-    POST
+    POST,
+    PUT,
+    HEAD,
+    OPTIONS,
+    DELETE
 };
