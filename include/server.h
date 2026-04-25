@@ -9,10 +9,22 @@
 #include <unistd.h>
 
 
+
 typedef struct Header {
     char* header;
     char* value;
 }Header;
+
+typedef struct Request {
+
+    enum METHOD method;
+    Header* headers;
+    int nbHeaders;
+    char* route;
+    char* body;
+
+}Request;
+
 
 typedef struct Response{
 
@@ -27,7 +39,7 @@ typedef struct Response{
 typedef struct Route {
     char* stringRoute;
     enum METHOD verb;
-    Response* (*method)(Response*);
+    Response* (*method)(Response*, Request*);
 }Route;
 
 
@@ -48,16 +60,17 @@ typedef struct Server {
     char* staticRoute;
     char* staticPath;
 
-    Response* (*defautlMethod)(Response*);
+    Response* (*defautlMethod)(Response*, Request*);
 
 }Server;
 
 
 
-
+void freeReq(Request* req);
+Request* parseRequest(char* buffer);
 
 void addGlobalHeader(Server* server, const char* header, const char* value);
-void addRoute(Server* server, const char* route, Response* (*method)(Response*), enum METHOD verb);
+void addRoute(Server* server, const char* route, Response* (*method)(Response*, Request*), enum METHOD verb);
 Response* addServerHeaderToResponse(Server* server, Response* response);
 Response* addHeaderToResponse(Header header, Response* response);
 char* stringifyResponse(Response* response);

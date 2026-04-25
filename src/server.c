@@ -11,7 +11,7 @@ void freeServer(Server* serv){
 }
 
 
-void addRoute(Server* server, const char* route, Response* (*method)(Response*), enum METHOD verb){
+void addRoute(Server* server, const char* route, Response* (*method)(Response*, Request*), enum METHOD verb){
     if(server->nbRoutes == 0) {
         server->routes = malloc(sizeof(Route));
     }

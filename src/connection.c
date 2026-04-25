@@ -13,7 +13,7 @@ void sendResponse(int new_socket, Response* reponse) {
     close(new_socket); // Ferme la connexion avec le client actuel
 }
 
-Response* defaut(Response* reponse) {
+Response* defaut(Response* reponse, Request* request) {
 
     return( addFileContentToResponseBody("static/index.html", reponse) );
 
@@ -74,7 +74,7 @@ void handleConnection(Server* server){
         response->status = 200;
         response = addServerHeaderToResponse(server, response);
 
-        Response* (*method)(Response*) = server->defautlMethod == NULL ? defaut : server->defautlMethod ;
+        Response* (*method)(Response*, Request*) = server->defautlMethod == NULL ? defaut : server->defautlMethod ;
         char customRoute = 0;
 
         if(server->staticRoute != NULL){
@@ -103,7 +103,7 @@ void handleConnection(Server* server){
                 }
             }
 
-            response = method(response);
+            response = method(response, request);
         }
 
 

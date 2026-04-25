@@ -1,24 +1,29 @@
 #include "../include/webc.h"
 
-Response* connard(Response* reponse){
+Response* connard(Response* reponse, Request* request){
     reponse->status = 404;
     addHeaderToResponse( (Header){"Content-Type", "text/html"} , reponse);
     return( addFileContentToResponseBody("static/accueil.html", reponse) );
 }
 
-Response* testGET(Response* reponse){
+Response* testGET(Response* reponse, Request* request){
     reponse->status = 200;
     addHeaderToResponse( (Header){"Content-Type", "text/html"} , reponse);
     return( addFileContentToResponseBody("static/get.html", reponse) );
 }
 
-Response* testPOST(Response* reponse){
+Response* testPOST(Response* reponse, Request* request){
     reponse->status = 200;
+
+    ParsedBody* body = parseBody(request->body);
+    printf("name : a / value : %s\n", getValue(body, "a"));
+
     addHeaderToResponse( (Header){"Content-Type", "application/json"} , reponse);
     return( addFileContentToResponseBody("static/post.html", reponse) );
+
 }
 
-Response* jsonTEST(Response* reponse){
+Response* jsonTEST(Response* reponse, Request* request){
     reponse->status = 200;
     addHeaderToResponse( (Header){"Content-Type", "application/json"} , reponse);
     return( addContentToResponseBody("{\"a\":\"b\"}", reponse) );

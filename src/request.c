@@ -1,4 +1,5 @@
-#include "../include/request.h"
+#include "../include/server.h"
+#include <string.h>
 
 void freeReq(Request* req){
     for(int i =0; i < req->nbHeaders; i+=1){
@@ -12,6 +13,7 @@ void freeReq(Request* req){
 
 
 Request* parseRequest(char* buffer) {
+    printf("[DEBUG] request: %s\n", buffer);
 
     Request* request = malloc(sizeof(Request));
 
@@ -80,10 +82,14 @@ Request* parseRequest(char* buffer) {
         headerStart = nextHeader;
     }
 
+    // printf("[DEBUG] lastHeader: %s\n", headerStart+3);
+    char* body = malloc(strlen(headerStart+4));
+    strcpy(body, headerStart+4);
+    printf("[DEBUG] body: %s ; len : %d\n", body, (int)strlen(body));
 
     request->headers = headers;
     request->nbHeaders = nbHeaders;
-
+    request->body = body;
 
     return request;
 
