@@ -104,6 +104,10 @@ void startServer(Server* server) {
 void handleConnection(Server *server);
 
 void run(Server* serv) {
+    if (listen(serv->server_fd, 3) < 0) {
+        perror("Échec du listen");
+        exit(EXIT_FAILURE);
+    }
     while(1) {
         handleConnection(serv);
     }
@@ -117,6 +121,20 @@ void stop(Server* serv){
 
 
 char* stringifyResponse(Response* response) {
+
+    int div = 10;
+    int size = 1;
+    int bodySize = strlen(response->body);
+    while(bodySize/div > 0) {
+        div*=10;
+        size+=1;
+    }
+
+    size+=2;
+    char* stringSize = malloc(size);
+    sprintf(stringSize, "%d", bodySize);
+    printf("[DEBUG] stringsize : %s, realsize : %d\n", stringSize, bodySize);
+    addHeaderToResponse((Header){"Content-Length", stringSize},response);
 
     char* stringified = malloc(18);
     sprintf(stringified, "HTTP/1.1 %d OK\r\n", response->status);
@@ -149,6 +167,8 @@ char* stringifyResponse(Response* response) {
 
     strcat(stringified, response->body);
     // printf("[DEBUG] stringified : %s\n",stringified);
+    //
+
 
     return stringified;
 

@@ -57,7 +57,7 @@ ParsedBody* parseBody(char* body) {
         count+=1;
     }
 
-    printf("[DEBUG] countParams : %d\n",count);
+    // printf("[DEBUG] countParams : %d\n",count);
     parsedBody->nbParams = count;
     parsedBody->params = malloc(count*sizeof(Parameter));
 
@@ -69,7 +69,7 @@ ParsedBody* parseBody(char* body) {
 
         end = strchr(start, '&') == NULL ? body+strlen(body) :  strchr(start, '&');
         delim = strchr(start, '=');
-        printf("[DEBUG] start : %s, delim : %s, end : %s\n",start, delim, end);
+        // printf("[DEBUG] start : %s, delim : %s, end : %s\n",start, delim, end);
 
         parsedBody->params[i].name = malloc(delim-start+1);
         strlcpy(parsedBody->params[i].name, start, delim-start+1);
@@ -78,7 +78,7 @@ ParsedBody* parseBody(char* body) {
         strlcpy(parsedBody->params[i].value, delim+1, end-delim);
 
 
-        printf("[DEBUG] paramName : %s / paramValue : %s\n",parsedBody->params[i].name, parsedBody->params[i].value );
+        // printf("[DEBUG] paramName : %s / paramValue : %s\n",parsedBody->params[i].name, parsedBody->params[i].value );
 
 
         start = end+1;
