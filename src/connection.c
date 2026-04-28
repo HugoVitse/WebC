@@ -1,16 +1,17 @@
 #include "../include/connection.h"
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 void sendResponse(int new_socket, Response* reponse) {
 
     char* stringResponse = stringifyResponse(reponse);
     send(new_socket, stringResponse, strlen(stringResponse), 0);
-    printf("Réponse envoyée au client.\n");
+    printf("Réponse sent.\n");
     freeResponse(reponse);
     free(stringResponse);
 
-    // close(new_socket); // Ferme la connexion avec le client actuel
+    // close(new_socket); // ferme la connexion avec le client
 }
 
 Response* defaut(Response* reponse, Request* request) {
@@ -20,10 +21,10 @@ Response* defaut(Response* reponse, Request* request) {
 }
 
 Response* staticRoute(char* route, Server* server, Response* reponse) {
+
     char* filepath = malloc(strlen(route)-strlen(server->staticRoute)+1);
     strlcpy(filepath, route+strlen(server->staticRoute) , strlen(route) - strlen(server->staticRoute)+1);
     filepath[ strlen(route) - strlen(server->staticRoute)] = '\0';
-
 
 
     char* filename = malloc(strlen(server->staticPath)+strlen(filepath)+2);
@@ -60,13 +61,13 @@ void* handleSocket(void* args) {
 
         if (valread > 0) {
             buffer[valread] = '\0';
-            // printf("Message reçu du client : %s\n", buffer);
+            printf("Message reçu du client : %s\n", buffer);
             countRequest+=1;
             //
-            printf("[DEBUG] Nombre de requete dans le meme socket : %d\n", countRequest);
+            // printf("[DEBUG] Nombre de requete dans le meme socket : %d\n", countRequest);
             Request* request = parseRequest(buffer);
-
             Response* response = malloc(sizeof(Response));
+
 
             // char *body = strdup("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n");
             char *body = strdup("");
@@ -74,6 +75,16 @@ void* handleSocket(void* args) {
             response->body = body;
             response->status = 200;
             response = addServerHeaderToResponse(castedArgs->server, response);
+
+            if(request==NULL) {
+                response->status = 400;
+
+                addHeaderToResponse( (Header){"Content-Type", "text/html"} , response);
+                addFileContentToResponseBody("static/badrequest.html", response);
+                sendResponse(castedArgs->socket, response);
+                continue;
+            }
+
 
             Response* (*method)(Response*, Request*) = castedArgs->server->defautlMethod == NULL ? defaut : castedArgs->server->defautlMethod ;
             char customRoute = 0;

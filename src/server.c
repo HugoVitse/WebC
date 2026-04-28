@@ -77,8 +77,8 @@ void startServer(Server* server) {
     server->nbHeaders = 0;
     server->staticRoute = NULL;
     server->defautlMethod = NULL;
-    server->nbRoutes = 0;
     server->routes = NULL;
+    server->nbRoutes = 0;
 
     if ((server->server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("Échec de la création du socket");

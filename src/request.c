@@ -3,9 +3,11 @@
 
 void freeReq(Request* req){
     for(int i =0; i < req->nbHeaders; i+=1){
+
         free(req->headers[i].header);
         free(req->headers[i].value);
     }
+
     free(req->headers);
     free(req->route);
     free(req);
@@ -13,21 +15,34 @@ void freeReq(Request* req){
 
 
 Request* parseRequest(char* buffer) {
-    // printf("[DEBUG] request: %s\n", buffer);
 
+    printf("[DEBUG] request: %s\n", buffer);
     Request* request = malloc(sizeof(Request));
 
     char* finMethod = strchr(buffer, ' ');
+
+    if(finMethod == NULL) {
+        free(request);
+        return NULL;
+    }
+
+
     char* stringMethod = malloc( finMethod-buffer+1 );
     strlcpy(stringMethod, buffer, finMethod-buffer+1);
     stringMethod[finMethod-buffer] = '\0';
 
-    // printf("[DEBUG] stringMethod: %s\n", stringMethod);
 
+    request->method = -1;
     if(strcmp(stringMethod, "GET") == 0) request->method = GET;
     if(strcmp(stringMethod, "POST") == 0) request->method = POST;
 
     free(stringMethod);
+
+    if(request->method == -1) {
+        free(request);
+        return NULL;
+    }
+
 
     char* endRoute = strstr(finMethod, "HTTP");
 
