@@ -15,7 +15,7 @@ make webc
 ```sh
 ./build/webc
 ```
-The server listens on port 8080.
+The server listens on port 8080 by default.
 
 ## Example routes
 These are just examples of route usage in the current code:
