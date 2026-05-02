@@ -45,6 +45,7 @@ Request* parseRequest(char* buffer) {
 
 
     char* endRoute = strstr(finMethod, "HTTP");
+    if(endRoute == NULL) return NULL;
 
     // printf("[DEBUG] endROute: %s\n", endRoute);
 
@@ -59,14 +60,20 @@ Request* parseRequest(char* buffer) {
     Header* headers = NULL;
 
     char* headerStart = strstr(buffer, "\r\n");
+    if(headerStart == NULL) return NULL;
+
     while( headerStart != NULL && *(headerStart+2) != '\r') {
-        // printf("[DEBUG] heaedersStart: %s\n", headerStart);
+        printf("[DEBUG] heaedersStart: %s\n", headerStart);
+        char* nextHeader = strstr(headerStart+2, "\r\n");
+        if(nextHeader == NULL) {
+            free(headers);
+            return NULL;
+        }
+
         nbHeaders+=1;
         if(nbHeaders == 0) headers = malloc(sizeof(Header));
         else headers = realloc(headers, nbHeaders*sizeof(Header));
 
-
-        char* nextHeader = strstr(headerStart+2, "\r\n");
         char* actualHeader = malloc(nextHeader-headerStart+1);
         strlcpy(actualHeader, headerStart, nextHeader-headerStart+1);
         actualHeader[nextHeader-headerStart] = '\0';
@@ -97,7 +104,7 @@ Request* parseRequest(char* buffer) {
         headerStart = nextHeader;
     }
 
-    // printf("[DEBUG] lastHeader: %s\n", headerStart+3);
+    printf("[DEBUG] lastHeader: %s\n", headerStart+3);
     char* body = malloc(strlen(headerStart+4));
     strcpy(body, headerStart+4);
     // printf("[DEBUG] body: %s ; len : %d\n", body, (int)strlen(body));

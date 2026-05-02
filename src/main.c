@@ -1,6 +1,6 @@
 #include "../include/webc.h"
 
-Response* connard(Response* reponse, Request* request){
+Response* accueil(Response* reponse, Request* request){
     reponse->status = 404;
     addHeaderToResponse( (Header){"Content-Type", "text/html"} , reponse);
     return( addFileContentToResponseBody("static/accueil.html", reponse) );
@@ -43,7 +43,7 @@ int main() {
     addGlobalHeader(&server, "Pragma" , "no-cache");
     addGlobalHeader(&server, "Expires" , "0");
 
-    addRoute(&server, "/test", connard, GET);
+    addRoute(&server, "/accueil", accueil, GET);
     addRoute(&server, "/verb", testGET, GET);
     addRoute(&server, "/verb", testPOST, POST);
     addRoute(&server, "/json", jsonTEST, GET);
@@ -52,10 +52,9 @@ int main() {
     server.staticRoute = "/static/";
     server.staticPath = "static";
 
-    server.defautlMethod = connard;
+    server.defautlMethod = accueil;
 
     run(&server);
-
     stop(&server);
 
     return 0;

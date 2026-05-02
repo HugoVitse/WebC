@@ -16,7 +16,7 @@ void sendResponse(int new_socket, Response* reponse) {
 
 Response* defaut(Response* reponse, Request* request) {
 
-    return( addFileContentToResponseBody("static/index.html", reponse) );
+    return( addFileContentToResponseBody("defaultPages/index.html", reponse) );
 
 }
 
@@ -80,7 +80,7 @@ void* handleSocket(void* args) {
                 response->status = 400;
 
                 addHeaderToResponse( (Header){"Content-Type", "text/html"} , response);
-                addFileContentToResponseBody("static/badrequest.html", response);
+                addFileContentToResponseBody("defaultPages/badrequest.html", response);
                 sendResponse(castedArgs->socket, response);
                 continue;
             }

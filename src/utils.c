@@ -8,7 +8,7 @@ Response* addFileContentToResponseBody(const char* filename, Response* response)
     fptr = fopen(filename, "r");
 
     if (fptr == NULL) {
-        fptr = fopen("static/notfound.html", "r");
+        fptr = fopen("defaultPages/notfound.html", "r");
     }
 
     fseek(fptr, 0L, SEEK_END);
