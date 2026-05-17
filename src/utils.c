@@ -5,26 +5,36 @@
 
 Response* addFileContentToResponseBody(const char* filename, Response* response) {
     FILE *fptr;
-    fptr = fopen(filename, "r");
+    fptr = fopen(filename, "rb");
+    printf("DEBUG : filename %s\n",filename);
 
     if (fptr == NULL) {
-        fptr = fopen("defaultPages/notfound.html", "r");
+        fptr = fopen("defaultPages/notfound.html", "rb");
     }
 
     fseek(fptr, 0L, SEEK_END);
     int sz = ftell(fptr);
     rewind(fptr);
 
+    printf("DEBUG : size %d\n",sz);
 
-    char myString[sz+1];
-    fread(myString, sz, 1, fptr);
-    myString[sz] = '\0';
+    char *buffer = malloc(sz);
+    if (buffer == NULL) {
+        fclose(fptr);
+        return response;
+    }
 
-    response->body = realloc(response->body, ( strlen(response->body)+sz+2));
-    strcat(response->body, "\n");
-    strcat(response->body, myString);
+    int bytesRead = fread(buffer, 1, sz, fptr);
+    int current_len = response->bodyLen;
+
+    printf("DEBUG : nbytesread %d , current : %d\n",bytesRead, current_len);
 
 
+    response->body = realloc(response->body, current_len + bytesRead);
+    memcpy(response->body + current_len, buffer, bytesRead);
+    response->bodyLen = current_len + bytesRead;
+
+    free(buffer);
     fclose(fptr);
 
 

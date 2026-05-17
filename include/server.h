@@ -33,6 +33,7 @@ typedef struct Response{
 
     int status;
     char* body;
+    int bodyLen;
 
 } Response;
 
@@ -73,7 +74,7 @@ void addGlobalHeader(Server* server, const char* header, const char* value);
 void addRoute(Server* server, const char* route, Response* (*method)(Response*, Request*), enum METHOD verb);
 Response* addServerHeaderToResponse(Server* server, Response* response);
 Response* addHeaderToResponse(Header header, Response* response);
-char* stringifyResponse(Response* response);
+char* stringifyResponse(Response* response, int* out_total_size);
 
 void startServer(Server* server);
 void freeServer(Server* serv);

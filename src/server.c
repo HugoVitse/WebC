@@ -120,58 +120,46 @@ void stop(Server* serv){
 }
 
 
-char* stringifyResponse(Response* response) {
+char* stringifyResponse(Response* response, int* out_total_size) {
 
-    int div = 10;
-    int size = 1;
-    int bodySize = strlen(response->body);
-    while(bodySize/div > 0) {
-        div*=10;
-        size+=1;
+    char stringSize[32];
+    sprintf(stringSize, "%d", response->bodyLen);
+    addHeaderToResponse((Header){"Content-Length", stringSize}, response);
+
+
+    size_t total_size = 17;
+
+    for(int i = 0; i < response->nbHeaders; i++) {
+        total_size += strlen(response->headers[i].header) + strlen(response->headers[i].value) + 4;
     }
 
-    size+=2;
-    char* stringSize = malloc(size);
-    sprintf(stringSize, "%d", bodySize);
-    printf("[DEBUG] stringsize : %s, realsize : %d\n", stringSize, bodySize);
-    addHeaderToResponse((Header){"Content-Length", stringSize},response);
+    total_size += 2;
+    total_size += response->bodyLen;
 
-    char* stringified = malloc(18);
-    sprintf(stringified, "HTTP/1.1 %d OK\r\n", response->status);
-
-    // printf("[DEBUG] body : %s\n",response->body);
-    // printf("[DEBUG] stringified : %s\n",stringified);
+    char* stringified = malloc(total_size + 1);
+    if (!stringified) return NULL;
 
 
-    for(int i =0; i < response->nbHeaders;i+=1){
+    char* ptr = stringified;
 
-        size_t header_len = strlen(response->headers[i].header);
-        size_t value_len = strlen(response->headers[i].value);
+    ptr += sprintf(ptr, "HTTP/1.1 %d OK\r\n", response->status);
 
-        size_t line_size = header_len + value_len + 5;
-
-        char* headerString = malloc(line_size);
-        sprintf(headerString, "%s: %s\r\n", response->headers[i].header, response->headers[i].value);
-
-
-        stringified = realloc(stringified, ( strlen(stringified)+line_size));
-        strcat(stringified, headerString);
-
-        free(headerString);
-        // printf("[DEBUG] stringified : %s\n",stringified);
-
+    for(int i = 0; i < response->nbHeaders; i++) {
+        ptr += sprintf(ptr, "%s: %s\r\n", response->headers[i].header, response->headers[i].value);
     }
 
-    stringified = realloc(stringified, ( strlen(stringified)+strlen(response->body)+3));
-    strcat(stringified, "\r\n");
+    ptr += sprintf(ptr, "\r\n");
 
-    strcat(stringified, response->body);
-    // printf("[DEBUG] stringified : %s\n",stringified);
-    //
+    if (response->bodyLen > 0 && response->body != NULL) {
+        memcpy(ptr, response->body, response->bodyLen);
+        ptr += response->bodyLen;
+    }
 
+    *ptr = '\0';
+
+    if (out_total_size) {
+        *out_total_size = (int)(ptr - stringified);
+    }
 
     return stringified;
-
-
-
 }

@@ -5,8 +5,9 @@
 
 void sendResponse(int new_socket, Response* reponse) {
 
-    char* stringResponse = stringifyResponse(reponse);
-    send(new_socket, stringResponse, strlen(stringResponse), 0);
+    int total_bytes = 0;
+    char* stringResponse = stringifyResponse(reponse, &total_bytes);
+    send(new_socket, stringResponse, total_bytes, 0);
     printf("Réponse sent.\n");
     freeResponse(reponse);
     free(stringResponse);
@@ -73,6 +74,7 @@ void* handleSocket(void* args) {
             char *body = strdup("");
             response->nbHeaders = 0;
             response->body = body;
+            response->bodyLen = 0;
             response->status = 200;
             response = addServerHeaderToResponse(castedArgs->server, response);
 
