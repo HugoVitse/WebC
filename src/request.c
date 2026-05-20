@@ -107,7 +107,7 @@ Request* parseRequest(char* buffer) {
     printf("[DEBUG] lastHeader: %s\n", headerStart+3);
     char* body = malloc(strlen(headerStart+4));
     strcpy(body, headerStart+4);
-    // printf("[DEBUG] body: %s ; len : %d\n", body, (int)strlen(body));
+    printf("[DEBUG] body: %s ; len : %d\n", body, (int)strlen(body));
 
     request->headers = headers;
     request->nbHeaders = nbHeaders;

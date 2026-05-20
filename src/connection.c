@@ -77,10 +77,8 @@ void* handleSocket(void* args) {
             response->bodyLen = 0;
             response->status = 200;
             response = addServerHeaderToResponse(castedArgs->server, response);
-
             if(request==NULL) {
                 response->status = 400;
-
                 addHeaderToResponse( (Header){"Content-Type", "text/html"} , response);
                 addFileContentToResponseBody("defaultPages/badrequest.html", response);
                 sendResponse(castedArgs->socket, response);
@@ -99,11 +97,12 @@ void* handleSocket(void* args) {
                 verifStaticRoute[strlen(castedArgs->server->staticRoute)] = '\0';
                 if(strcmp(verifStaticRoute, castedArgs->server->staticRoute)==0) {
                     response = staticRoute(request->route, castedArgs->server, response);
-                    // printf("[DEBUG] %s\n", response->body);
+                    printf("[DEBUG] %s\n", response->body);
                 }
                 else customRoute = 1;
                 free(verifStaticRoute);
             }
+
 
             else customRoute = 1;
 
@@ -111,7 +110,6 @@ void* handleSocket(void* args) {
 
                 for(int i = 0; i < castedArgs->server->nbRoutes; i+=1) {
                     if(strcmp(castedArgs->server->routes[i].stringRoute, request->route)==0 && request->method == castedArgs->server->routes[i].verb) {
-
                         method = castedArgs->server->routes[i].method;
                         break;
                     }

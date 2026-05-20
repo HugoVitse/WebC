@@ -54,12 +54,15 @@ Response* addContentToResponseBody(const char* content, Response *response){
 
 ParsedBody* parseBody(char* body) {
 
+    ParsedBody* parsedBody= malloc(sizeof(ParsedBody));
     char* occur = strchr(body, '&');
     if(occur == NULL) {
-        return NULL;
+        parsedBody->nbParams = 0;
+        parsedBody->params = NULL;
+        return parsedBody;
     }
 
-    ParsedBody* parsedBody= malloc(sizeof(ParsedBody));
+
     int count = 1;
 
     while(occur != NULL) {
@@ -100,6 +103,8 @@ ParsedBody* parseBody(char* body) {
 
 char* getValue(ParsedBody* body, char* value) {
 
+    if(body == NULL) return "";
+
     for(int i = 0; i < body->nbParams; i+=1) {
 
         if(strcmp(body->params[i].name, value) == 0) {
@@ -109,5 +114,5 @@ char* getValue(ParsedBody* body, char* value) {
 
     }
 
-    return NULL;
+    return "";
 }
