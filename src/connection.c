@@ -1,24 +1,40 @@
 #include "../include/connection.h"
+#include "../include/response.h"
+#include "../include/server.h"
+#include "../include/request.h"
+#include "../include/header.h"
+
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 
-void sendResponse(int new_socket, Response* reponse) {
-
-    int total_bytes = 0;
-    char* stringResponse = stringifyResponse(reponse, &total_bytes);
-    send(new_socket, stringResponse, total_bytes, 0);
-    printf("Réponse sent.\n");
-    freeResponse(reponse);
-    free(stringResponse);
-
-    // close(new_socket); // ferme la connexion avec le client
-}
 
 Response* defaut(Response* reponse, Request* request) {
 
-    return( addFileContentToResponseBody("defaultPages/index.html", reponse) );
+    Response* ret = addFileContentToResponseBody("defaultPages/index.html", reponse);
+    if(ret == NULL) {
+        return (addContentToResponseBody("<!doctypehtml><htmllang=\"en\"><head><metacharset=\"UTF-8\"/><metaname=\"viewport\"content=\"width=device-width,initial-scale=1.0\"/><title>Document</title></head><body><h1>Web C Default Page</h1></body></html>", reponse));
+    }
+    return ret;
 
+}
+
+Response* badRequest(Response* reponse, Request* request) {
+
+    Response* ret = addFileContentToResponseBody("defaultPages/badrequest.html", reponse);
+    if(ret == NULL) {
+        return (addContentToResponseBody("<!doctypehtml><htmllang=\"en\"><head><metacharset=\"UTF-8\"/><metaname=\"viewport\"content=\"width=device-width,initial-scale=1.0\"/><title>Document</title></head><body><h1>Bad Request</h1></body></html>", reponse));
+    }
+    return ret;
+}
+
+Response* notFound(Response* reponse, Request* request) {
+
+    Response* ret = addFileContentToResponseBody("defaultPages/notfound.html", reponse);
+    if(ret == NULL) {
+        return (addContentToResponseBody("<!doctypehtml><htmllang=\"en\"><head><metacharset=\"UTF-8\"/><metaname=\"viewport\"content=\"width=device-width,initial-scale=1.0\"/><title>Document</title></head><body><h1>Not Found</h1></body></html>", reponse));
+    }
+    return ret;
 }
 
 Response* staticRoute(char* route, Server* server, Response* reponse) {
@@ -80,7 +96,7 @@ void* handleSocket(void* args) {
             if(request==NULL) {
                 response->status = 400;
                 addHeaderToResponse( (Header){"Content-Type", "text/html"} , response);
-                addFileContentToResponseBody("defaultPages/badrequest.html", response);
+                badRequest(response, request);
                 sendResponse(castedArgs->socket, response);
                 continue;
             }

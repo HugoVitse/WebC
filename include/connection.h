@@ -10,13 +10,12 @@
 #include <unistd.h>
 #include <time.h>
 
-#include "../include/server.h"
-#include "../include/utils.h"
+#include "../include/types.h"
 
 #define BUFFER_SIZE 1024
 
 
-typedef struct {
+typedef struct ThreadArgs {
     int socket;
     Server* server;
 } ThreadArgs;

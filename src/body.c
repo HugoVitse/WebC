@@ -1,55 +1,7 @@
-#include "../include/utils.h"
+#include "../include/body.h"
+
 #include <stdlib.h>
 #include <string.h>
-
-
-Response* addFileContentToResponseBody(const char* filename, Response* response) {
-    FILE *fptr;
-    fptr = fopen(filename, "rb");
-    printf("DEBUG : filename %s\n",filename);
-
-    if (fptr == NULL) {
-        fptr = fopen("defaultPages/notfound.html", "rb");
-    }
-
-    fseek(fptr, 0L, SEEK_END);
-    int sz = ftell(fptr);
-    rewind(fptr);
-
-    printf("DEBUG : size %d\n",sz);
-
-    char *buffer = malloc(sz);
-    if (buffer == NULL) {
-        fclose(fptr);
-        return response;
-    }
-
-    int bytesRead = fread(buffer, 1, sz, fptr);
-    int current_len = response->bodyLen;
-
-    printf("DEBUG : nbytesread %d , current : %d\n",bytesRead, current_len);
-
-
-    response->body = realloc(response->body, current_len + bytesRead);
-    memcpy(response->body + current_len, buffer, bytesRead);
-    response->bodyLen = current_len + bytesRead;
-
-    free(buffer);
-    fclose(fptr);
-
-
-    return response;
-}
-
-
-Response* addContentToResponseBody(const char* content, Response *response){
-
-    response->body = realloc(response->body, strlen(response->body)+strlen(content)+1);
-    strcat(response->body,content);
-
-    return response;
-
-}
 
 
 ParsedBody* parseBody(char* body) {

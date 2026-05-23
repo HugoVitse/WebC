@@ -1,5 +1,9 @@
-#include "../include/server.h"
+#include "../include/request.h"
+#include "../include/header.h"
+
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 void freeReq(Request* req){
     for(int i =0; i < req->nbHeaders; i+=1){

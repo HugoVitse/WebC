@@ -31,7 +31,6 @@ Response* jsonTEST(Response* reponse, Request* request){
 }
 
 
-
 int main() {
 
     Server server;
@@ -52,7 +51,7 @@ int main() {
     server.staticRoute = "/static/";
     server.staticPath = "static";
 
-    server.defautlMethod = accueil;
+    // server.defautlMethod = accueil;
 
     run(&server);
     stop(&server);
