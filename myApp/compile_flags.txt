@@ -1,0 +1,4 @@
+-Iinclude
+-Ilib/include
+-I./include
+-I./lib/include

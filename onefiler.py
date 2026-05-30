@@ -32,7 +32,7 @@ def readFile(file):
 
 
 def makeFile(files, types):
-    content = ""
+    content = "#pragma once\n"
     typeContent = readFile(types)
     content += typeContent
     for file in files:
