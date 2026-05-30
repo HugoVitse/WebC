@@ -3,6 +3,7 @@ set -euo pipefail
 
 URL="https://github.com/HugoVitse/webc/releases/latest/download/webc.zip"
 ZIP_NAME="webc.zip"
+TARGET_DIR=""
 
 if [ -t 1 ]; then
 	RED="\033[31m"
@@ -29,17 +30,38 @@ pad() {
 }
 
 banner() {
-	log "${BOLD}   ____                    _   ${RESET}"
-	log "${BOLD}  / ___|_ __ ___  __ _ ___| |_ ${RESET}"
-	log "${BOLD} | |   | '__/ _ \\/ _ / / | __|${RESET}"
-	log "${BOLD} | |___| | |  __/ (_| | |_| |_ ${RESET}"
-	log "${BOLD}  \____|_|  \___|\__,_\___|\__|${RESET}"
+	log "${BOLD}  __   __   __              ______     ${RESET}"
+	log "${BOLD} |  | |  | |  |  ___  __   /  _____\   ${RESET}"
+	log "${BOLD} |  | |  | |  | / _ \| |___|  |        ${RESET}"
+	log "${BOLD} |  |_|  |_|  | | \_ | |_| |  |_____    ${RESET}"
+	log "${BOLD}  \__________/  \___|\____/\_______/   ${RESET}"
 }
 
 die() {
 	log "${RED}Error:${RESET} $1"
 	exit 1
 }
+
+usage() {
+	log "Usage: $0 [-d|--dir <folder>]"
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		-d|--dir)
+			[[ $# -ge 2 ]] || die "Missing value for $1"
+			TARGET_DIR="$2"
+			shift 2
+			;;
+		-h|--help)
+			usage
+			exit 0
+			;;
+		*)
+			die "Unknown option: $1"
+			;;
+	esac
+done
 
 if ! command -v unzip >/dev/null 2>&1; then
 	die "unzip is required. Please install it and retry."
@@ -65,6 +87,19 @@ log "${GREEN}Progress:${RESET} [#####-----] 50%"
 
 log "${BLUE}Extracting:${RESET} $ZIP_NAME"
 unzip -o "$ZIP_NAME"
+
+
+if [[ -n "$TARGET_DIR" ]]; then
+	if [[ -e "$TARGET_DIR" ]]; then
+		die "Target directory already exists: $TARGET_DIR"
+	fi
+	mkdir -p "$TARGET_DIR"
+	shopt -s dotglob nullglob
+	mv myApp/* "$TARGET_DIR"/
+	shopt -u dotglob nullglob
+	rm -rf myApp
+	rm "$ZIP_NAME"
+fi
 
 log "${GREEN}[2/2] Extracted.${RESET}"
 log "${GREEN}Progress:${RESET} [##########] 100%"
